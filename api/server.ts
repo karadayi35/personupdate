@@ -19,14 +19,19 @@ if (!admin.apps.length) {
   try {
     if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
       // Initialize using environment variables (Vercel/Production)
-      admin.initializeApp({
+      const adminConfig: admin.AppOptions = {
         credential: admin.credential.cert({
           projectId: process.env.FIREBASE_PROJECT_ID,
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
           privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
         }),
-      });
+      };
+
+      admin.initializeApp(adminConfig);
       console.log("Firebase Admin initialized successfully using environment variables.");
+      
+      const dbId = process.env.FIREBASE_DATABASE_ID || "ai-studio-90f319b6-1ccf-4f41-8793-86588c46c0c6";
+      console.log("Firestore Database ID configured:", dbId);
     } else {
       // Fallback to service-account.json (Local Development)
       const serviceAccountPath = path.join(process.cwd(), "service-account.json");
