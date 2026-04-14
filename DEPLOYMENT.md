@@ -37,5 +37,5 @@ Vercel Dashboard üzerinde aşağıdaki değişkenleri tanımlamanız gerekmekte
 ## 3. Önemli Notlar
 
 *   `vercel.json` dosyası artık modern "Zero Config" yapısına uygundur ve sadece API yönlendirmelerini yönetir.
-*   `server.ts` dosyası Vercel tarafından otomatik olarak bir Serverless Function olarak işlenir.
+*   `api/server.ts` dosyası Vercel tarafından otomatik olarak bir Serverless Function olarak işlenir.
 *   SPA (Single Page Application) yönlendirmeleri Vercel tarafından otomatik olarak `index.html`'e yönlendirilecek şekilde ayarlanmıştır.
