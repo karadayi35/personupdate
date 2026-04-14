@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { auth, db } from '@/firebase';
-import { onSnapshot, doc } from 'firebase/firestore';
+import { onSnapshot, doc, query, collection, where } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MobileLayout() {
@@ -34,9 +34,10 @@ export default function MobileLayout() {
     }
 
     // Fetch employee data to show in sidebar
-    const unsub = onSnapshot(doc(db, 'employees', user.uid), (doc) => {
-      if (doc.exists()) {
-        setUserData(doc.data());
+    const q = query(collection(db, 'employees'), where('authUid', '==', user.uid));
+    const unsub = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        setUserData(snapshot.docs[0].data());
       }
     });
 

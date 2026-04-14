@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { auth, db } from '@/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { 
   collection, 
   query, 
@@ -33,7 +34,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 export default function EmployeeDashboard() {
-  const [user] = useState(auth.currentUser);
+  const [user, setUser] = useState(auth.currentUser);
   const [employeeData, setEmployeeData] = useState<any>(null);
   const [branchData, setBranchData] = useState<any>(null);
   const [shiftInfo, setShiftInfo] = useState<any>(null);
@@ -44,32 +45,71 @@ export default function EmployeeDashboard() {
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [qrAction, setQrAction] = useState<'check-in' | 'check-out' | null>(null);
   const [recentRecords, setRecentRecords] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
-
-    // Fetch employee data
-    const q = query(collection(db, 'employees'), where('authUid', '==', user.uid));
-    const unsubEmp = onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) {
-        const docSnap = snapshot.docs[0];
-        const data = docSnap.data();
-        setEmployeeData({ id: docSnap.id, ...data });
-        
-        if (data.branchId) {
-          onSnapshot(doc(db, 'branches', data.branchId), (branchSnap) => {
-            if (branchSnap.exists()) {
-              setBranchData({ id: branchSnap.id, ...branchSnap.data() });
-            }
-          });
-        }
-      } else {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (!currentUser) {
         setLoading(false);
       }
     });
 
+    return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    setLoading(true);
+
+    // Fetch employee data
+    const q = query(collection(db, 'employees'), where('authUid', '==', user.uid));
+    const unsubEmp = onSnapshot(q, 
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const docSnap = snapshot.docs[0];
+          const data = docSnap.data();
+          setEmployeeData({ id: docSnap.id, ...data });
+          
+          if (data.branchId) {
+            onSnapshot(doc(db, 'branches', data.branchId), 
+              (branchSnap) => {
+                if (branchSnap.exists()) {
+                  setBranchData({ id: branchSnap.id, ...branchSnap.data() });
+                }
+              },
+              (error) => {
+                console.error("Branch data fetch error:", error);
+              }
+            );
+          }
+        } else {
+          console.warn("No employee record found for this user.");
+          setLoading(false);
+        }
+      },
+      (error) => {
+        console.error("Employee data fetch error:", error);
+        setError("Personel verisi alınamadı. Lütfen internet bağlantınızı kontrol edin.");
+        setLoading(false);
+      }
+    );
+
+    // Safety timeout for initial load
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn("Loading timed out after 10 seconds");
+        setLoading(false);
+        if (!employeeData) {
+          setError("Veriler yüklenemedi. Sayfayı yenilemeyi deneyin.");
+        }
+      }
+    }, 10000);
+
     return () => {
       unsubEmp();
+      clearTimeout(timeout);
       const html5QrCode = (window as any).html5QrCode;
       if (html5QrCode) {
         if (html5QrCode.isScanning) {
@@ -92,16 +132,22 @@ export default function EmployeeDashboard() {
       where('status', '==', 'working')
     );
 
-    const unsubStatus = onSnapshot(qStatus, (snapshot) => {
-      if (!snapshot.empty) {
-        setStatus('working');
-        setCurrentRecordId(snapshot.docs[0].id);
-      } else {
-        setStatus('idle');
-        setCurrentRecordId(null);
+    const unsubStatus = onSnapshot(qStatus, 
+      (snapshot) => {
+        if (!snapshot.empty) {
+          setStatus('working');
+          setCurrentRecordId(snapshot.docs[0].id);
+        } else {
+          setStatus('idle');
+          setCurrentRecordId(null);
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Status fetch error:", error);
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    );
 
     // Fetch recent records
     const recentQ = query(
@@ -111,9 +157,14 @@ export default function EmployeeDashboard() {
       limit(3)
     );
 
-    const unsubRecent = onSnapshot(recentQ, (snapshot) => {
-      setRecentRecords(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    const unsubRecent = onSnapshot(recentQ, 
+      (snapshot) => {
+        setRecentRecords(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      },
+      (error) => {
+        console.error("Recent records fetch error:", error);
+      }
+    );
 
     // Fetch shift info
     const fetchShift = async () => {
@@ -314,9 +365,28 @@ export default function EmployeeDashboard() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh]">
+      <div className="flex flex-col items-center justify-center h-[60vh] p-6 text-center">
         <Loader2 className="animate-spin text-whatsapp-600 mb-4" size={40} />
-        <p className="text-slate-500 font-medium">Yükleniyor...</p>
+        <p className="text-slate-500 font-medium">Verileriniz hazırlanıyor...</p>
+        <p className="text-xs text-slate-400 mt-2">Bu işlem internet hızınıza bağlı olarak biraz sürebilir.</p>
+      </div>
+    );
+  }
+
+  if (error || (!employeeData && !loading)) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] p-8 text-center">
+        <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+          <AlertCircle className="text-red-500" size={32} />
+        </div>
+        <h3 className="text-lg font-bold text-slate-800 mb-2">Bir Sorun Oluştu</h3>
+        <p className="text-slate-500 mb-6">{error || "Personel kaydınız bulunamadı. Lütfen yöneticinizle iletişime geçin."}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="w-full py-3 bg-whatsapp-600 text-white rounded-xl font-bold shadow-lg shadow-whatsapp-600/20"
+        >
+          Tekrar Dene
+        </button>
       </div>
     );
   }
