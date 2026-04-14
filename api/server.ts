@@ -150,6 +150,15 @@ async function startServer() {
     });
   }
 
+  // Global error handler to ensure JSON responses
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error("Global error handler caught:", err);
+    res.status(500).json({ 
+      error: "Internal Server Error", 
+      message: err instanceof Error ? err.message : String(err) 
+    });
+  });
+
   // Only listen if not on Vercel (Vercel handles the serverless execution)
   if (process.env.VERCEL !== '1') {
     app.listen(PORT, "0.0.0.0", () => {
