@@ -3,6 +3,16 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
+// Debug logs for environment variables (Production'da kontrol için)
+if (import.meta.env.MODE === 'production') {
+  console.log('Firebase Config Check:', {
+    hasApiKey: !!import.meta.env.VITE_FIREBASE_API_KEY,
+    hasAuthDomain: !!import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    hasProjectId: !!import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    apiKeyPrefix: import.meta.env.VITE_FIREBASE_API_KEY ? import.meta.env.VITE_FIREBASE_API_KEY.substring(0, 5) + '...' : 'MISSING'
+  });
+}
+
 // Use environment variables directly
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -14,14 +24,27 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-const firestoreDatabaseId = import.meta.env.VITE_FIRESTORE_DATABASE_ID;
+// Validate config before initialization
+if (!firebaseConfig.apiKey) {
+  console.error('CRITICAL ERROR: Firebase API Key is missing! Check Vercel Environment Variables.');
+}
+
+const firestoreDatabaseId = import.meta.env.VITE_FIRESTORE_DATABASE_ID || "ai-studio-90f319b6-1ccf-4f41-8793-86588c46c0c6";
+
+if (import.meta.env.MODE === 'production') {
+  console.log('Firestore Database ID:', firestoreDatabaseId);
+  if (!import.meta.env.VITE_FIRESTORE_DATABASE_ID) {
+    console.warn('WARNING: VITE_FIRESTORE_DATABASE_ID is not set. Using AI Studio fallback ID. Please set this environment variable in Vercel for production.');
+  }
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
 // Initialize Services
 export const auth = getAuth(app);
-export const db = getFirestore(app, firestoreDatabaseId);
+// Explicitly pass databaseId to getFirestore
+export const db = getFirestore(app, firestoreDatabaseId || '(default)');
 export const storage = getStorage(app);
 
 // Error Handling Types and Utilities (Required for system debugging)
