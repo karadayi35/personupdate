@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@theme {
+  --color-whatsapp-50: #f0fdf4;
+  --color-whatsapp-100: #dcfce7;
+  --color-whatsapp-200: #bbf7d0;
+  --color-whatsapp-300: #86efac;
+  --color-whatsapp-400: #4ade80;
+  --color-whatsapp-500: #22c55e;
+  --color-whatsapp-600: #25D366;
+  --color-whatsapp-700: #15803d;
+  --color-whatsapp-800: #166534;
+  --color-whatsapp-900: #14532d;
+  --color-whatsapp-950: #052e16;
+}
+
+@layer utilities {
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    .print-content, .print-content * {
+      visibility: visible;
+    }
+    .print-content {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: white !important;
+    }
+    .no-print {
+      display: none !important;
+    }
+  }
+}
+
+#qr-reader video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+#qr-reader {
+  border: none !important;
+}

@@ -1,0 +1,8 @@
+{
+  "name": "PersoTrack - Personel Takip Sistemi",
+  "description": "Kapsamlı personel giriş-çıkış, konum kontrollü mesai ve raporlama sistemi.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}

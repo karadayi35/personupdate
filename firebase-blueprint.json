@@ -1,0 +1,229 @@
+{
+  "entities": {
+    "Employee": {
+      "title": "Employee",
+      "description": "Personel bilgileri",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "role": { "type": "string" },
+        "department": { "type": "string" },
+        "branchId": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "employeeCode": { "type": "string" },
+        "mobileAccessActive": { "type": "boolean" },
+        "mobileAccountCreated": { "type": "boolean" },
+        "tempPassword": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "role", "branchId", "status", "mobileAccessActive"]
+    },
+    "EmailLog": {
+      "title": "Email Log",
+      "description": "E-posta gönderim kayıtları",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "employeeEmail": { "type": "string" },
+        "type": { "type": "string" },
+        "status": { "type": "string", "enum": ["success", "failed"] },
+        "sentAt": { "type": "string", "format": "date-time" },
+        "content": { "type": "object" },
+        "error": { "type": "string" }
+      },
+      "required": ["employeeId", "employeeEmail", "type", "status", "sentAt"]
+    },
+    "AttendanceRecord": {
+      "title": "Attendance Record",
+      "description": "Giriş-çıkış kayıtları",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "branchId": { "type": "string" },
+        "date": { "type": "string", "format": "date", "description": "YYYY-MM-DD" },
+        "checkIn": { "type": "string", "format": "date-time" },
+        "checkOut": { "type": "string", "format": "date-time" },
+        "workedMinutes": { "type": "number" },
+        "lateMinutes": { "type": "number" },
+        "earlyLeaveMinutes": { "type": "number" },
+        "overtimeMinutes": { "type": "number" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" },
+            "address": { "type": "string" },
+            "isWithinRadius": { "type": "boolean" }
+          }
+        },
+        "method": { "type": "string", "enum": ["QR", "Manual", "NFC"] },
+        "status": { "type": "string", "enum": ["normal", "late", "absent", "leave", "overtime"] },
+        "deviceInfo": { "type": "string" }
+      },
+      "required": ["employeeId", "date", "checkIn", "method"]
+    },
+    "Shift": {
+      "title": "Shift",
+      "description": "Vardiya şablonları",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "startTime": { "type": "string", "description": "HH:mm" },
+        "endTime": { "type": "string", "description": "HH:mm" },
+        "breakMinutes": { "type": "number" },
+        "lateToleranceMinutes": { "type": "number" },
+        "earlyLeaveToleranceMinutes": { "type": "number" },
+        "overtimeAfterMinutes": { "type": "number" },
+        "isNightShift": { "type": "boolean" },
+        "activeDays": { "type": "array", "items": { "type": "number" }, "description": "0-6 (Pazar-Cumartesi)" }
+      },
+      "required": ["name", "startTime", "endTime"]
+    },
+    "EmployeeShiftAssignment": {
+      "title": "Employee Shift Assignment",
+      "description": "Personel vardiya atamaları",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "shiftId": { "type": "string" },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "repeatType": { "type": "string", "enum": ["daily", "weekly", "custom"] },
+        "activeDays": { "type": "array", "items": { "type": "number" }, "description": "0-6 (Pazar-Cumartesi)" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["employeeId", "shiftId", "startDate", "isActive"]
+    },
+    "ShiftOverride": {
+      "title": "Shift Override",
+      "description": "Günlük vardiya değişiklikleri",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "customStartTime": { "type": "string" },
+        "customEndTime": { "type": "string" },
+        "overrideType": { "type": "string", "enum": ["shift_change", "day_off", "overtime", "replacement"] },
+        "reason": { "type": "string" }
+      },
+      "required": ["employeeId", "date", "overrideType"]
+    },
+    "Branch": {
+      "title": "Branch",
+      "description": "Şube bilgileri",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "radius": { "type": "number", "description": "Metre cinsinden" }
+      },
+      "required": ["name", "lat", "lng", "radius"]
+    },
+    "Leave": {
+      "title": "Leave",
+      "description": "İzin talepleri",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "leaveType": { "type": "string" },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] }
+      },
+      "required": ["employeeId", "leaveType", "startDate", "endDate", "status"]
+    },
+    "License": {
+      "title": "License",
+      "description": "Lisans bilgileri",
+      "type": "object",
+      "properties": {
+        "licenseKey": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "expired", "suspended"] },
+        "companyName": { "type": "string" },
+        "activatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["licenseKey", "status"]
+    },
+    "BranchBreak": {
+      "title": "Branch Break",
+      "description": "Şube bazlı mola tanımları",
+      "type": "object",
+      "properties": {
+        "branchId": { "type": "string" },
+        "shiftId": { "type": "string", "description": "Opsiyonel: Belirli bir vardiya için" },
+        "type": { "type": "string", "enum": ["Çay Molası", "Yemek Molası"] },
+        "startTime": { "type": "string", "description": "HH:mm" },
+        "endTime": { "type": "string", "description": "HH:mm" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["branchId", "type", "startTime", "endTime", "isActive"]
+    },
+    "EmployeeBreakOverride": {
+      "title": "Employee Break Override",
+      "description": "Personel bazlı mola istisnaları",
+      "type": "object",
+      "properties": {
+        "employeeId": { "type": "string" },
+        "branchBreakId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "customStartTime": { "type": "string" },
+        "customEndTime": { "type": "string" },
+        "isExcluded": { "type": "boolean" }
+      },
+      "required": ["employeeId", "branchBreakId", "date"]
+    }
+  },
+  "firestore": {
+    "employees": {
+      "schema": "Employee",
+      "description": "Tüm personeller"
+    },
+    "attendance_records": {
+      "schema": "AttendanceRecord",
+      "description": "Giriş-çıkış logları"
+    },
+    "branches": {
+      "schema": "Branch",
+      "description": "Şubeler"
+    },
+    "shifts": {
+      "schema": "Shift",
+      "description": "Vardiya şablonları"
+    },
+    "employee_shift_assignments": {
+      "schema": "EmployeeShiftAssignment",
+      "description": "Personel vardiya atamaları"
+    },
+    "shift_overrides": {
+      "schema": "ShiftOverride",
+      "description": "Günlük vardiya değişiklikleri"
+    },
+    "leaves": {
+      "schema": "Leave",
+      "description": "İzin talepleri"
+    },
+    "licenses": {
+      "schema": "License",
+      "description": "Lisans anahtarları"
+    },
+    "email_logs": {
+      "schema": "EmailLog",
+      "description": "E-posta gönderim kayıtları"
+    },
+    "branch_breaks": {
+      "schema": "BranchBreak",
+      "description": "Şube bazlı mola tanımları"
+    },
+    "employee_break_overrides": {
+      "schema": "EmployeeBreakOverride",
+      "description": "Personel bazlı mola istisnaları"
+    }
+  }
+}
